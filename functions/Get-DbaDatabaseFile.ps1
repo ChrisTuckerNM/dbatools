@@ -27,6 +27,9 @@ function Get-DbaDatabaseFile {
     This avoids overwhelming you with "sea of red" exceptions, but is inconvenient because it basically disables advanced scripting.
     Using this switch turns this "nice by default" feature off and enables you to catch exceptions with your own try/catch.
 
+    .PARAMETER OutFileMapping
+    Outputs a hash compatible with Restore-DbaDatabase -ReplaceFile command method
+
     .NOTES
     Author: Stuart Moore (@napalmgram), stuart-moore.com
     Tags: Database
@@ -59,12 +62,12 @@ function Get-DbaDatabaseFile {
         [object[]]$Database,
         [object[]]$ExcludeDatabase,
         [object[]]$InputObject,
+        [switch]$OutFileMapping,
         [Alias('Silent')]
         [switch]$EnableException
     )
 
     process {
-
         foreach ($instance in $sqlInstance) {
             try {
                 Write-Message -Level Verbose -Message "Connecting to $instance"
@@ -222,39 +225,47 @@ ON fd.Drive = LEFT(df.physical_name, 1);
                     }
                     if ( ($nextgrowtheventadd.Byte -gt ($MaxSize.Byte - $size.Byte)) -and $maxsize -gt 0 ) { [dbasize]$nextgrowtheventadd = 0 }
 
-                    [PSCustomObject]@{
-                        ComputerName             = $server.ComputerName
-                        InstanceName             = $server.ServiceName
-                        SqlInstance              = $server.DomainInstanceName
-                        Database                 = $db.name
-                        FileGroupName            = $result.FileGroupName
-                        ID                       = $result.ID
-                        Type                     = $result.Type
-                        TypeDescription          = $result.TypeDescription
-                        LogicalName              = $result.LogicalName.Trim()
-                        PhysicalName             = $result.PhysicalName.Trim()
-                        State                    = $result.State
-                        MaxSize                  = $maxsize
-                        Growth                   = $result.Growth
-                        GrowthType               = $result.GrowthType
-                        NextGrowthEventSize      = $nextgrowtheventadd
-                        Size                     = $size
-                        UsedSpace                = $usedspace
-                        AvailableSpace           = $AvailableSpace
-                        IsOffline                = $result.IsOffline
-                        IsReadOnly               = $result.IsReadOnly
-                        IsReadOnlyMedia          = $result.IsReadOnlyMedia
-                        IsSparse                 = $result.IsSparse
-                        NumberOfDiskWrites       = $result.NumberOfDiskWrites
-                        NumberOfDiskReads        = $result.NumberOfDiskReads
-                        ReadFromDisk             = [dbasize]$result.BytesReadFromDisk
-                        WrittenToDisk            = [dbasize]$result.BytesWrittenToDisk
-                        VolumeFreeSpace          = $VolumeFreeSpace
-                        FileGroupDataSpaceId     = $result.FileGroupDataSpaceId
-                        FileGroupType            = $result.FileGroupType
-                        FileGroupTypeDescription = $result.FileGroupTypeDescription
-                        FileGroupDefault         = $result.FileGroupDefault
-                        FileGroupReadOnly        = $result.FileGroupReadOnly
+                    
+                    if ($OutFileMapping){
+                        [HashTable]@{
+                         $result.LogicalName.Trim() = $result.PhysicalName.Trim()
+                        }
+                    }
+                    else {
+                            [PSCustomObject]@{
+                                ComputerName             = $server.ComputerName
+                                InstanceName             = $server.ServiceName
+                                SqlInstance              = $server.DomainInstanceName
+                                Database                 = $db.name
+                                FileGroupName            = $result.FileGroupName
+                                ID                       = $result.ID
+                                Type                     = $result.Type
+                                TypeDescription          = $result.TypeDescription
+                                LogicalName              = $result.LogicalName.Trim()
+                                PhysicalName             = $result.PhysicalName.Trim()
+                                State                    = $result.State
+                                MaxSize                  = $maxsize
+                                Growth                   = $result.Growth
+                                GrowthType               = $result.GrowthType
+                                NextGrowthEventSize      = $nextgrowtheventadd
+                                Size                     = $size
+                                UsedSpace                = $usedspace
+                                AvailableSpace           = $AvailableSpace
+                                IsOffline                = $result.IsOffline
+                                IsReadOnly               = $result.IsReadOnly
+                                IsReadOnlyMedia          = $result.IsReadOnlyMedia
+                                IsSparse                 = $result.IsSparse
+                                NumberOfDiskWrites       = $result.NumberOfDiskWrites
+                                NumberOfDiskReads        = $result.NumberOfDiskReads
+                                ReadFromDisk             = [dbasize]$result.BytesReadFromDisk
+                                WrittenToDisk            = [dbasize]$result.BytesWrittenToDisk
+                                VolumeFreeSpace          = $VolumeFreeSpace
+                                FileGroupDataSpaceId     = $result.FileGroupDataSpaceId
+                                FileGroupType            = $result.FileGroupType
+                                FileGroupTypeDescription = $result.FileGroupTypeDescription
+                                FileGroupDefault         = $result.FileGroupDefault
+                                FileGroupReadOnly        = $result.FileGroupReadOnly
+                        }
                     }
                 }
             }
